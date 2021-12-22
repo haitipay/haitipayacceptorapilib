@@ -1,0 +1,3129 @@
+openapi: 3.0.0
+info:
+  title: HaitiPay Acceptor API
+  description: "# HaitiPay API description\n\n**The HaitiPay platform** is designed to support several types of transactions and payment applications. HaitiPay allows any phone to be used as for electronic transactions, such as bill payment, money transfers to others, point of sale purchases, etc. The HaitiPay platform offers the following features to users:\npurchase goods and services at their favorite local stores. Unbanked merchants will be able to accept payments and formalize their business transactions. \n \n**HaitiPay electronic wallet:** Anyone with a mobile phone can easily and securely: store, send and spend money using the HaitiPay electronic wallet. The funds are placed in the wallet in different ways, by recharging in cash of the counter at agent locations, by wallet to wallet transfers, by disbursement of wages or by linking it to a bank account. The HaitiPay wallet can be used to pay bills, shop in stores on the web, or transfer money to other users.\n\n> \U0001F4A1 Follow instructions below to request access to this workspace and test the HaitiPay API.\n\n---\n\n## Request an invitation to Access the HaitiPay API \n \n Please request an invitation to access the HaitiPay API\n by sending an email to [admin@haitipay.com](mailto:admin@haitipay.com)\n With your name and company information.\n \n Within 24 hrs you will receive a confirmation that will allow you to access the \n HaitiPay workspace.\n  \n\n## We're Here to Help\n\nIt is important we understand the Business Models you want to implement.\nGet in touch and let us know how we can help.\n\nContact support at [devsupport@haitipay.com](mailto:devsupport@haitipay.com)\nto get help from our team.\n\n# Authentication\n\n## OAuth2\n### Pre-requisites\nTo access the HaitiPay Acceptor API you must have a registered acceptor account on the HaitiPay platform. An API key for this acceptor must be created for you by HaitiPay Administration.\n\n### Obtaining an Access Token\nIn order to obtain an Access Token, you must `POST`to the URL https://sandbox.haitipay.com/api/acceptor/v1/oauth2/ token using a `Content-type: application/json` header and a JSON body containing the following items:\n\n|                |                         |                        |\n|----------------|-------------------------------|-----------------------------|\n|grant_type|string|MUST be `client_credentials`          |\n|client_id         |string            |the `API key identifier`            |\n|client_secret        |string|The `API key secret`|\n\n**Request body example**\n\n```json\n{ \n\"grant_type\":\"client_credentials\", \n\"client_id\":\"eza9eza21eaz951ea8f2ffs9fgdfsdd3\", \n\"client_secret\":\"eb5d1477-0dab-4b36-bc3e-9da6d6cc25ba\"\n}\n```\n\nCalling the URL as described above will yield a response similar to this (actual token cut off with `[...]` for brevity):\n\n```json\n{\n\"token_type\": \"Bearer\",\n\"expires_in\":59940,\n\"access_token\":\"eyJ0eXAiOiJKV1Qi0MzI5Oi0MzI5ODDNiMzJj[...]\"\n}\n```\n\n### Now that you have an Access Token\nThe thus obtained access token must be provided in the HTTP request header `Authorization` for each **API call** prefixed by the word `Bearer` (with the trailing space):\n\n`Authorization: Bearer your_api_token`\n\n### Access token lifetime\nThe access token has the **same lifetime as a user's session**, with the significant difference that it's lifetime is not extended upon each API action.\n\nTherefore, the access token will expire after it's predefined lifetime has expired, resulting in a HTTP 401 Unauthorized response with the message Access token is invalid.\n\nIt is the API consumer's responsibility to detect such response, to obtain a new access token using the process described above, and optionally to issue the failed request anew."
+  contact:
+    name: Developer Support
+    url: https://wwww.haitipay.com/api.html
+    email: devsupport@haitipay.com
+  version: '0.1'
+servers:
+- url: https://sandbox.haitipay.com/api/acceptor/v1
+  variables: {}
+paths:
+  /clients:
+    get:
+      tags:
+      - Clients
+      summary: SearchClients
+      description: Search for a client
+      operationId: SearchClients
+      parameters:
+      - name: phone
+        in: query
+        description: 'the client mobile phone number format ex: 50937027447'
+        style: form
+        explode: true
+        schema:
+          pattern: ^[0-9]+$
+          type: string
+          example: '50937027447'
+      - name: idNumber
+        in: query
+        description: 'the client identity number National ID card ex: 123456789'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: externalId
+        in: query
+        description: 'the client l identifier from External  Third Party System ex: EXTSYSID123'
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Client information
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - clients_view
+  /clients/{clientId}/accounts:
+    get:
+      tags:
+      - Accounts
+      summary: SearchClientAccounts
+      description: Search client accounts
+      operationId: SearchClientAccounts
+      parameters:
+      - name: clientId
+        in: path
+        description: 'insert client id ex: 1421 * (can be obtained by looking up client profile with Search Client EndPoint using Client Phone Number or Identification Number Gov. ID card, Passport, SSN)'
+        required: true
+        style: simple
+        schema:
+          type: string
+          example: '1421'
+      - name: id
+        in: query
+        description: 'HaitiPay Account *11 Digits ex: 10000015205'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: iban
+        in: query
+        description: 'Account information in IBAN format: ex:  FR791680810000000538'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: bic
+        in: query
+        description: 'Account information in BIC format 9 -11 Letters:  BNCHHTPPXXX'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: 'Status of the Account  ex: OPENED , CLOSED, BLOCKED'
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountStatus'
+      - name: type
+        in: query
+        description: 'type of  HaitiPay Account ** Exemple: CURRENT, DEDICATED'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: Pagination page number
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+          nullable: true
+      - name: limit
+        in: query
+        description: The number of items per page
+        style: form
+        explode: true
+        schema:
+          maximum: 500
+          minimum: 1
+          type: integer
+          format: int32
+          default: 20
+          nullable: true
+      - name: sort
+        in: query
+        description: Field to define the sort order. To indicate sorting direction, ascending (oldest first) fields may be prefixed with +. Descending (newer first) fields may be prefixed with -
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: id
+          nullable: true
+      responses:
+        '200':
+          description: The client accounts
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountCollection'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - client_accounts_view
+  /accounts:
+    get:
+      tags:
+      - Accounts
+      summary: SearchAccounts
+      description: Search accounts
+      operationId: SearchAccounts
+      parameters:
+      - name: id
+        in: query
+        description: 'insert HaitiPay Account Number format 11 digits = ex:   10000015205'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: iban
+        in: query
+        description: 'Account information in IBAN format:  FR791680810000000538'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: bic
+        in: query
+        description: 'Account information in BIC format 9 -11 Letters:  BNCHHTPPXXX'
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: OPEN, BLOCKED, CLOSED,
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountStatus'
+      - name: type
+        in: query
+        description: type of account =CURRENT, SAVINGS or DEDICATED
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: Pagination page number
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+          nullable: true
+      - name: limit
+        in: query
+        description: The number of items per page
+        style: form
+        explode: true
+        schema:
+          maximum: 500
+          minimum: 1
+          type: integer
+          format: int32
+          default: 20
+          nullable: true
+      - name: sort
+        in: query
+        description: Field to define the sort order. To indicate sorting direction, ascending (oldest first) fields may be prefixed with +. Descending (newer first) fields may be prefixed with -
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: id
+          nullable: true
+      responses:
+        '200':
+          description: The accounts
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountCollection'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - accounts_view
+  /transactions/cashin/{transactionToken}:
+    post:
+      tags:
+      - Cashin
+      summary: CashinMake
+      description: Making a Cashin transaction for a Client. ( Client recharges his/her wallet account by first  giving cash to Agent then Agent recharges Client Account with e-money from his Agent Account. E-money is debited from Agent Account and then credited to Client  wallet Account)
+      operationId: CashinMake
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Request successful, transaction was made
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsCashinResponse1'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - cashin
+  /transactions/cashin:
+    post:
+      tags:
+      - Cashin
+      summary: CashinPreauth
+      description: Cashin pre-authorization. Acceptor (Agent or Merchant) needs to do a Preauthorization before making a confirmed Cash-in Transaction. Once Acceptor get pre-authorization token, the pre-authorized transaction needs to be validated by at least 2 Authentification methods using token.
+      operationId: CashinPreauth
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsCashinRequest'
+            example:
+              clientIdentifier:
+                value: '1421'
+                type: ID
+              amount:
+                value: 100
+                currency: HTG
+        required: true
+      responses:
+        '201':
+          description: Preauth successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsCashinResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - cashin
+  /transactions/cashout/{transactionToken}:
+    post:
+      tags:
+      - Cashout
+      summary: CashoutMake
+      description: Cashout transaction
+      operationId: CashoutMake
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Request successful, transaction was made
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsCashoutResponse1'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - cashout
+  /transactions/cashout:
+    post:
+      tags:
+      - Cashout
+      summary: CashoutPreauth
+      description: Cashout pre-authorization
+      operationId: CashoutPreauth
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsCashoutRequest'
+            example:
+              clientIdentifier:
+                value: '1421'
+                type: ID
+              amount:
+                value: 100
+                currency: HTG
+        required: true
+      responses:
+        '201':
+          description: Preauth successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsCashoutResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - cashout
+  /transactions/payment/{transactionToken}:
+    post:
+      tags:
+      - Payment
+      summary: PaymentMake
+      description: Payment transaction
+      operationId: PaymentMake
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Request successful, transaction was made
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsPaymentResponse1'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - payment
+  /transactions/payment:
+    post:
+      tags:
+      - Payment
+      summary: PaymentPreauth
+      description: Payment pre-authorization
+      operationId: PaymentPreauth
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsPaymentRequest'
+        required: true
+      responses:
+        '201':
+          description: Preauth successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsPaymentResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - payment
+  /billers:
+    get:
+      tags:
+      - Bill payment
+      summary: LoadBillerTree
+      description: Bill issuers list
+      operationId: LoadBillerTree
+      parameters:
+      - name: billItemId
+        in: query
+        description: root item to use to get a subset of this tree
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Returns the bill issuers list ordered by categories
+          headers: {}
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  type: object
+                description: Returns the bill issuers list ordered by categories
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - bill_payment
+  /transactions/paybill:
+    post:
+      tags:
+      - Bill payment
+      summary: InitPaybill
+      description: "\n<details>\n  <summary>An example of paybill call flow (click to expand)</summary>\n  \n  ```js\n  function paybill(apiClient, billIssuerId, clientIdentifier) {\n      // initiate paybill transaction\n      let response = apiClient.post(\"/transactions/paybill\", {billIssuerId: billIssuerId, clientIdentifier: clientIdentifier});\n      let transactionToken = response.body.transactionToken;\n      let userSubmittedValues = null;\n  \n      // making multiple preauth\n      while(true) {\n          response = apiClient.patch(\"/transactions/paybill/\" + transactionToken, {inputs: userSubmittedValues});\n          if (response.code === 201) {\n              break;\n          }\n          userSubmittedValues = askUserInput(response.body.inputs);\n      }\n      \n      // making authentification\n      makeAuth(transactionToken)\n  \n      // making transaction\n      apiClient.post(\"/transactions/paybill/\" + transactionToken);\n  }\n  \n  function askUserInput(inputs) {\n      // ui logic to ask user to fill inputs\n  }\n  \n  function makeAuth(transactionToken)\n  {\n      // logic to make authentication\n  }\n  ```\n\n</details>\n"
+      operationId: InitPaybill
+      parameters: []
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: object
+              example: '{   "paybillType": "CASH",   "billIssuerId": "1414",   "clientIdentifier": {     "type": "ID",     "value": "1421"   },   "location": {     "latitude": 0,     "longitude": 0   },   "externalId": "EXT123456789",   "externalData": {} }'
+            example: '{   "paybillType": "CASH",   "billIssuerId": "1414",   "clientIdentifier": {     "type": "ID",     "value": "1421"   },   "location": {     "latitude": 0,     "longitude": 0   },   "externalId": "EXT123456789",   "externalData": {} }'
+        required: true
+      responses:
+        '201':
+          description: Request successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsPaybillResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - bill_payment
+  /transactions/paybill/{transactionToken}:
+    patch:
+      tags:
+      - Bill payment
+      summary: SubmitPaybillInfo
+      description: Paybill pre-authorization
+      operationId: SubmitPaybillInfo
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsPaybillRequest'
+        required: true
+      responses:
+        '200':
+          description: Request success but more inputs are required
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsPaybillResponse1'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - bill_payment
+    post:
+      tags:
+      - Bill payment
+      summary: Paybill
+      description: Paybill transaction
+      operationId: Paybill
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Success response
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsPaybillResponse2'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - bill_payment
+  /transactions/reversal:
+    post:
+      tags:
+      - Reversal
+      summary: ReversalPreauth
+      description: Reversal pre-authorization
+      operationId: ReversalPreauth
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsReversalRequest'
+        required: true
+      responses:
+        '201':
+          description: Preauth successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsReversalResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - reversal
+  /transactions/reversal/{transactionToken}:
+    post:
+      tags:
+      - Reversal
+      summary: ReversalMake
+      description: Reversal transaction
+      operationId: ReversalMake
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Request successful, transaction was made
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsReversalResponse1'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - reversal
+  /authentications/{transactionToken}/pincode-acceptor/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyAcceptorPincode
+      description: Should be called when requested authentication mode is `PINCODE_ACCEPTOR`
+      operationId: VerifyAcceptorPincode
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationsPincodeAcceptorVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Authentication successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeAcceptorVerifyResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_pincode_acceptor
+  /authentications/{transactionToken}/qr-code/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyQrCode
+      description: >
+        Should be called when requested authentication mode is `QR_CODE_CLIENT`.
+
+
+        This endpoint uses [Server Sent Events](#section/Server-Sent-Events)
+      operationId: VerifyQrCode
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Server sent events stream about the QR code process
+          headers: {}
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Server sent events stream about the QR code process
+                example: >
+                  id: EVT123
+
+                  type: CLIENT_CONNECTED
+
+                  data: {"client" : {"id" : "CLI123"}}
+
+
+
+                  id: EVT124
+
+                  type: TRANSACTION_PREAUTH
+
+                  data: {"transaction":{"date":"2020-05-18T06:47:22Z","type":{"value":"PAYMENT","label":"Payment"},"externalId":"EXT123456789","externalData":{},"label":"string","description":"string","geolocation":{"latitude":0,"longitude":0},"amount":{"value":1337,"currency":"EUR"},"detailedAccounting":[{"id":"ACO4","date":"2020-05-18T06:47:22Z","accountId":"ACC123","description":"Transfer of 13.37 € from John Doe to Jane Dae","amount":{"value":1337,"currency":"EUR"},"balance":{"value":1337,"currency":"EUR"},"type":"TRANSFER"}]}}
+
+
+
+                  id: EVT125
+
+                  type: TRANSACTION_SESSION
+
+                  data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"QR_CODE","status":"PENDING"},{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+              example: >
+                id: EVT123
+
+                type: CLIENT_CONNECTED
+
+                data: {"client" : {"id" : "CLI123"}}
+
+
+
+                id: EVT124
+
+                type: TRANSACTION_PREAUTH
+
+                data: {"transaction":{"date":"2020-05-18T06:47:22Z","type":{"value":"PAYMENT","label":"Payment"},"externalId":"EXT123456789","externalData":{},"label":"string","description":"string","geolocation":{"latitude":0,"longitude":0},"amount":{"value":1337,"currency":"EUR"},"detailedAccounting":[{"id":"ACO4","date":"2020-05-18T06:47:22Z","accountId":"ACC123","description":"Transfer of 13.37 € from John Doe to Jane Dae","amount":{"value":1337,"currency":"EUR"},"balance":{"value":1337,"currency":"EUR"},"type":"TRANSFER"}]}}
+
+
+
+                id: EVT125
+
+                type: TRANSACTION_SESSION
+
+                data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"QR_CODE","status":"PENDING"},{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_qr_code
+  /authentications/{transactionToken}:
+    delete:
+      tags:
+      - Authentication
+      summary: CancelTransaction
+      description: Can cancel an ongoing transaction
+      operationId: CancelTransaction
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Transaction was cancelled
+          headers: {}
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_cancel
+  /authentications/{transactionToken}/otp-client/send:
+    patch:
+      tags:
+      - Authentication
+      summary: SendClientOTP
+      description: Should be called when requested authentication mode is `OTP_CLIENT`
+      operationId: SendClientOTP
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OTP was sent
+          headers: {}
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_otp_client
+  /authentications/{transactionToken}/pincode-client/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyClientPincode
+      description: Should be called when requested authentication mode is `PINCODE_CLIENT`
+      operationId: VerifyClientPincode
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationsPincodeClientVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Authentication successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerifyResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_pincode_client
+  /authentications/{transactionToken}/otp-client/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyClientOTP
+      description: Should be called when requested authentication mode is `OTP_CLIENT`, after that OTP was sent
+      operationId: VerifyClientOTP
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationsOtpClientVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Authentication successful
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsOtpClientVerifyResponse'
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_otp_client
+  /authentications/{transactionToken}/pincode-client-ivr/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyPincodeClientIVR
+      description: >
+        Should be called when requested authentication mode is `PINCODE_CLIENT_IVR`.
+
+
+        This endpoint uses [Server Sent Events](#section/Server-Sent-Events)
+      operationId: VerifyPincodeClientIVR
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Server sent events stream about the client pincode on IVR process
+          headers: {}
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Server sent events stream about the client pincode on IVR process
+                example: >
+                  id: EVT124
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "RINGING"}
+
+
+
+                  id: EVT125
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "CONNECTED"}
+
+
+
+                  id: EVT126
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "SUCCESS"}
+
+
+
+                  id: EVT127
+
+                  type: TRANSACTION_SESSION
+
+                  data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+              example: >
+                id: EVT124
+
+                type: CALL_STATUS
+
+                data: {"status" : "RINGING"}
+
+
+
+                id: EVT125
+
+                type: CALL_STATUS
+
+                data: {"status" : "CONNECTED"}
+
+
+
+                id: EVT126
+
+                type: CALL_STATUS
+
+                data: {"status" : "SUCCESS"}
+
+
+
+                id: EVT127
+
+                type: TRANSACTION_SESSION
+
+                data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_pincode_client_ivr
+  /authentications/{transactionToken}/nsdt/verify:
+    patch:
+      tags:
+      - Authentication
+      summary: VerifyNSDT
+      description: >
+        Should be called when requested authentication mode is `NSDT_CLIENT`.
+
+
+        This endpoint uses [Server Sent Events](#section/Server-Sent-Events)
+
+
+        When event call status is `CONNECTED`, the API Client should start playing NSDT token.
+
+
+        When event call status is in `SUCCESS`, `HANG_UP`, `TIMEOUT`, the API Client should stop playing NSDT token.
+      operationId: VerifyNSDT
+      parameters:
+      - name: transactionToken
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Server sent events stream about the NSDT process
+          headers: {}
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Server sent events stream about the NSDT process
+                example: >
+                  id: EVT123
+
+                  type: NSDT_TOKEN
+
+                  data: {"token" : "f0d40;f3d30;f8d30;f8d30;f7d30;f2d30;f4d30;f3d30;f2d30;f3d30;f1d30;f1d30;f2d30;f4d30;f6d30;f2d30;f8d30;f1d30;f7d30;f1d30"}
+
+
+
+                  id: EVT124
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "RINGING"}
+
+
+
+                  id: EVT125
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "CONNECTED"}
+
+
+
+                  id: EVT126
+
+                  type: CALL_STATUS
+
+                  data: {"status" : "SUCCESS"}
+
+
+
+                  id: EVT127
+
+                  type: TRANSACTION_SESSION
+
+                  data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+              example: >
+                id: EVT123
+
+                type: NSDT_TOKEN
+
+                data: {"token" : "f0d40;f3d30;f8d30;f8d30;f7d30;f2d30;f4d30;f3d30;f2d30;f3d30;f1d30;f1d30;f2d30;f4d30;f6d30;f2d30;f8d30;f1d30;f7d30;f1d30"}
+
+
+
+                id: EVT124
+
+                type: CALL_STATUS
+
+                data: {"status" : "RINGING"}
+
+
+
+                id: EVT125
+
+                type: CALL_STATUS
+
+                data: {"status" : "CONNECTED"}
+
+
+
+                id: EVT126
+
+                type: CALL_STATUS
+
+                data: {"status" : "SUCCESS"}
+
+
+
+                id: EVT127
+
+                type: TRANSACTION_SESSION
+
+                data: {"session":{"token":"string","status":"AUTH_PENDING","authentications":[{"mode":"PINCODE_ACCEPTOR","status":"PENDING","fallback":"PINCODE_ACCEPTOR"}]}}
+        default:
+          description: Request could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationsPincodeClientVerify0Error'
+      deprecated: false
+      security:
+      - oauth2:
+        - authentication_nsdt
+components:
+  schemas:
+    CallStatusEvent:
+      title: CallStatusEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: Event id
+          example: EVT123
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          $ref: '#/components/schemas/Data'
+    Account:
+      title: Account
+      required:
+      - id
+      - balance
+      - availableBalance
+      - status
+      - label
+      - createdAt
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+        balance:
+          $ref: '#/components/schemas/Amount'
+        availableBalance:
+          $ref: '#/components/schemas/Amount'
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+        label:
+          type: string
+          description: The account label
+          example: 'Current account #123546'
+        createdAt:
+          type: string
+          format: date-time
+        externalId:
+          type: string
+          description: 'External id (from the calling system) ex: EXT123456789'
+          nullable: true
+        iban:
+          type: string
+        bic:
+          type: string
+        lastUsedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        type:
+          $ref: '#/components/schemas/AccountType'
+        merchant:
+          type: string
+          description: "merchant's brand for dedicated account  ex: PHARMA PLUS"
+    IdNumberIdentifier:
+      title: IdNumberIdentifier
+      allOf:
+      - $ref: '#/components/schemas/ClientIdentifier'
+      - type: object
+        properties:
+          type:
+            $ref: '#/components/schemas/Type3'
+      description: 'Type of Identifier to identify Client ex: Client Government Id Number ( Ex: ID_NUMBER )'
+    ServerSentEvent:
+      title: ServerSentEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: Event id
+          example: EVT123
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          type: object
+          description: Event data encoded in json
+          example:
+            attribute1: value1
+            attribute2: value2
+    MaxValidator:
+      title: MaxValidator
+      required:
+      - type
+      - max
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        max:
+          type: number
+    BoolInput:
+      title: BoolInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: boolean
+    Periodicity:
+      title: Periodicity
+      enum:
+      - HOUR
+      - WEEK
+      - DAY
+      - MONTH
+      - YEAR
+      type: string
+      description: Available periodicities
+    MinValidator:
+      title: MinValidator
+      required:
+      - type
+      - min
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        min:
+          type: number
+    PaybillAccountTransactionRequest:
+      title: PaybillAccountTransactionRequest
+      required:
+      - paybillType
+      - billIssuerId
+      - clientIdentifier
+      type: object
+      properties:
+        paybillType:
+          $ref: '#/components/schemas/PaybillType'
+        billIssuerId:
+          type: string
+          description: the bill issuer system identifier
+        clientIdentifier:
+          $ref: '#/components/schemas/ClientIdentifier'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    DateTimeInput:
+      title: DateTimeInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+          example: '20180717162042'
+        format:
+          type: string
+          description: Possible formats are the ones accepted by the [date function (php)](http://php.net/manual/en/function.date.php)
+          example: YmdHis
+    SelectInput:
+      title: SelectInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+          example: someValue
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+    Duration:
+      title: Duration
+      type: object
+      properties:
+        value:
+          type: integer
+          description: 'insert Value of Periodicity ex: 42'
+          format: int32
+        unit:
+          $ref: '#/components/schemas/Periodicity'
+    ClientIdentifier:
+      title: ClientIdentifier
+      required:
+      - value
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+      description: 'Insert ClientIndentifier either  ClientId ex: Value=1421 Type= ID , ClientPhone ex: Value=50937027447 Type= PHONE, ClientGovID ex: Value=0038699008 Type=ID_NUMBER, Client External System  Reference  ex: Value= EXT1234567 Type=EXTERNAL_ID'
+      discriminator:
+        propertyName: type
+      example:
+        clientIdentifier:
+          value: '1421'
+          type: ID
+        amount:
+          value: 100
+          currency: HTG
+    Amount:
+      title: Amount
+      required:
+      - value
+      - currency
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Amount without separator and symbol
+          format: int32
+          example: 100
+        currency:
+          type: string
+          description: Three-letter ISO currency code, in uppercase. Read more at https://fr.wikipedia.org/wiki/ISO_4217.
+          example: HTG
+    TransactionSession:
+      title: TransactionSession
+      required:
+      - token
+      - status
+      type: object
+      properties:
+        token:
+          type: string
+          description: Transaction session identifier
+        status:
+          $ref: '#/components/schemas/TransactionSessionStatus'
+        authentications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Authentication'
+    TransactionSessionEvent:
+      title: TransactionSessionEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Event id ex: EVT123'
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          $ref: '#/components/schemas/Data1'
+    EmailInput:
+      title: EmailInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+    TransactionPreauthEvent:
+      title: TransactionPreauthEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Event id ex: EVT123'
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          $ref: '#/components/schemas/Data4'
+    DateInput:
+      title: DateInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+          example: '20180717'
+        format:
+          type: string
+          description: Possible formats are the ones accepted by the [date function (php)](http://php.net/manual/en/function.date.php)
+          example: Ymd
+    AccountType:
+      title: AccountType
+      enum:
+      - CURRENT
+      - SAVINGS
+      - DEDICATED
+      - MONEYPOT
+      type: string
+      description: Account Type
+    OptionWithAmount:
+      title: OptionWithAmount
+      required:
+      - id
+      - label
+      - amount
+      type: object
+      properties:
+        id:
+          type: string
+          example: someValue
+        label:
+          type: string
+          example: Label for someValue
+        amount:
+          $ref: '#/components/schemas/Amount'
+    ClientConnectedEvent:
+      title: ClientConnectedEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Event id ex: EVT123'
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          $ref: '#/components/schemas/Data3'
+    AmountInput:
+      title: AmountInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          $ref: '#/components/schemas/Amount'
+        currencies:
+          type: array
+          items:
+            type: string
+    Collection:
+      title: Collection
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        count:
+          minimum: 0
+          type: integer
+          description: the number of elements returned in `items` array
+          format: int32
+        total:
+          minimum: 0
+          type: integer
+          description: the total number of objects in collection
+          format: int32
+        offset:
+          minimum: 0
+          type: integer
+          description: Pagination start (from 0)
+          format: int32
+          default: 0
+        limit:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Number of results to display (default 20)
+          format: int32
+          default: 20
+        sort:
+          type: string
+          description: Field to define sort order
+          default: id
+    CallStatus:
+      title: CallStatus
+      enum:
+      - RINGING
+      - CONNECTED
+      - SUCCESS
+      - ANSWERING_MACHINE
+      - HANG_UP
+      - TIMEOUT
+      - ERROR
+      type: string
+      description: >-
+        - `RINGING` : User phone number was called, it has not picked up yet
+
+        - `CONNECTED` : User picked up.
+
+        - `SUCCESS` : Authentication was successfully validated.
+
+        - `ANSWERING_MACHINE` : User answering machine was detected by the server
+
+        - `HANG_UP` : User hanged up before server was able to validate the authentication
+
+        - `TIMEOUT` : Server hanged up
+
+        - `ERROR` : Authentication failed
+    AuthenticationStatus:
+      title: AuthenticationStatus
+      enum:
+      - PENDING
+      - SUCCESS
+      - ERROR
+      type: string
+      description: Authentication status
+    MultiSelectInput:
+      title: MultiSelectInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: array
+          items:
+            type: string
+          example:
+          - someValue
+          - anotherValue
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+    BillerItemType:
+      title: BillerItemType
+      enum:
+      - CATEGORY
+      - BILL_ISSUER
+      type: string
+      description: Type of node in bill issuers tree
+    AuthenticationMode:
+      title: AuthenticationMode
+      enum:
+      - PINCODE_ACCEPTOR
+      - PINCODE_CLIENT
+      - PINCODE_CLIENT_IVR
+      - NSDT_CLIENT
+      - QR_CODE_CLIENT
+      - OTP_CLIENT
+      type: string
+      description: Authentication mode
+    NSDTTokenEvent:
+      title: NSDTTokenEvent
+      required:
+      - id
+      - event
+      - data
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Event id ex: EVT123'
+        event:
+          $ref: '#/components/schemas/Event'
+        data:
+          $ref: '#/components/schemas/Data2'
+    TransactionRequest:
+      title: TransactionRequest
+      type: object
+      properties:
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    TextInput:
+      title: TextInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          description: input your input label
+        description:
+          type: string
+          description: insert your input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+    AccountingEntryType:
+      title: AccountingEntryType
+      enum:
+      - TRANSFER
+      - FEE
+      - COMMISSION
+      - TAX
+      - DISCOUNT
+      type: string
+    TransactionAccounting:
+      title: TransactionAccounting
+      required:
+      - id
+      - date
+      - type
+      - detailedAccounting
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'HaitiPay transaction id ex: REF: 12345678'
+        date:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/Type'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+        label:
+          type: string
+          description: User defined transaction label
+        description:
+          type: string
+          description: Transaction description
+        geolocation:
+          $ref: '#/components/schemas/Geolocation'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        detailedAccounting:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountingEntry'
+    IdIdentifier:
+      title: IdIdentifier
+      allOf:
+      - $ref: '#/components/schemas/ClientIdentifier'
+      - type: object
+        properties:
+          type:
+            $ref: '#/components/schemas/Type1'
+          value:
+            type: string
+            description: Insert the Client identifier
+            example: '1421'
+    Authentication:
+      title: Authentication
+      required:
+      - mode
+      - status
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/AuthenticationMode'
+        status:
+          $ref: '#/components/schemas/AuthenticationStatus'
+        fallback:
+          $ref: '#/components/schemas/AuthenticationMode'
+    AbstractInput:
+      title: AbstractInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+    AmountValidator:
+      title: AmountValidator
+      required:
+      - type
+      - currencies
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        currencies:
+          type: array
+          items:
+            type: string
+    Client:
+      title: Client
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          type: string
+    ExternalIdIdentifier:
+      title: ExternalIdIdentifier
+      allOf:
+      - $ref: '#/components/schemas/ClientIdentifier'
+      - type: object
+        properties:
+          type:
+            $ref: '#/components/schemas/Type4'
+          value:
+            type: string
+            description: Insert External Identifier
+            example: EXT1234567
+    DurationInput:
+      title: DurationInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          $ref: '#/components/schemas/Duration'
+        periodicities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Periodicity'
+    PaybillType:
+      title: PaybillType
+      enum:
+      - ACCOUNT
+      - CASH
+      type: string
+      description: Type of paybill
+    PhoneIdentifier:
+      title: PhoneIdentifier
+      allOf:
+      - $ref: '#/components/schemas/ClientIdentifier'
+      - type: object
+        properties:
+          type:
+            $ref: '#/components/schemas/Type2'
+          value:
+            pattern: ^[0-9]+$
+            type: string
+            description: >-
+              Phone number in international format (E.164)
+
+
+              (without plus sign, dashes or spaces)
+            example: '50937027447'
+    AccountStatus:
+      title: AccountStatus
+      enum:
+      - OPENED
+      - CLOSED
+      - BLOCKED
+      type: string
+      description: The account status
+    Biller:
+      title: Biller
+      required:
+      - id
+      - name
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: the bill issuer system identifier
+        name:
+          type: string
+          description: Displayable name of bill issuer
+        type:
+          $ref: '#/components/schemas/BillerItemType'
+        logoUrl:
+          type: string
+          description: Logo of bill issuer
+      description: Bill issuer
+    Option:
+      title: Option
+      required:
+      - id
+      - label
+      type: object
+      properties:
+        id:
+          type: string
+          example: someValue
+        label:
+          type: string
+          example: Label for someValue
+    Transaction:
+      title: Transaction
+      required:
+      - id
+      - date
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: HaitiPay transaction id
+          example: TRX123
+        date:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/Type'
+        externalId:
+          type: string
+          description: Client custom data (external) for TransactionId
+          example: EXT123456789
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+        label:
+          type: string
+          description: User defined transaction label
+        description:
+          type: string
+          description: Transaction description
+        geolocation:
+          $ref: '#/components/schemas/Geolocation'
+        amount:
+          $ref: '#/components/schemas/Amount'
+    InputType:
+      title: InputType
+      enum:
+      - AMOUNT
+      - TEXT
+      - BOOL
+      - DATE
+      - DATE_TIME
+      - DURATION
+      - EMAIL
+      - FILE
+      - IMAGE
+      - COLLECTION
+      - INT
+      - IP
+      - MULTI_SELECT
+      - NUMBER
+      - PERCENT
+      - PASSWORD
+      - PHONE
+      - PINCODE
+      - RATE
+      - SELECT
+      - SELECT_WITH_AMOUNT
+      type: string
+    AccountCollection:
+      title: AccountCollection
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Account'
+          description: collection of accounts
+        count:
+          minimum: 0
+          type: integer
+          description: the number of elements returned in `items` array
+          format: int32
+        total:
+          minimum: 0
+          type: integer
+          description: the total number of objects in collection
+          format: int32
+        offset:
+          minimum: 0
+          type: integer
+          description: Pagination start (from 0)
+          format: int32
+          default: 0
+        limit:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Number of results to display (default 20)
+          format: int32
+          default: 20
+        sort:
+          type: string
+          description: Field to define sort order
+          default: id
+      description: Sorted and paginated list of accounts
+    PaybillCashTransactionRequest:
+      title: PaybillCashTransactionRequest
+      required:
+      - paybillType
+      - billIssuerId
+      type: object
+      properties:
+        paybillType:
+          $ref: '#/components/schemas/PaybillType'
+        billIssuerId:
+          type: string
+          description: the bill issuer system identifier
+        clientIdentifier:
+          $ref: '#/components/schemas/ClientIdentifier'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    Error:
+      title: Error
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: integer
+          description: error code
+          format: int32
+          example: 1234
+        message:
+          type: string
+          description: This is an error message, it can be shown to the end user
+          example: something went wrong because requirement X was not met.
+        hint:
+          type: string
+          description: More technical message about the error, to ease debugging of what went wrong. It should not be shown to the end user
+          example: '"myAttribute" must be a string, int given'
+    Geolocation:
+      title: Geolocation
+      required:
+      - latitude
+      - longitude
+      type: object
+      properties:
+        latitude:
+          type: number
+          description: the location latitude
+        longitude:
+          type: number
+          description: the location longitude
+      description: a geolocalized location (latitude/longitude)
+    BillerCategory:
+      title: BillerCategory
+      required:
+      - id
+      - name
+      - type
+      - children
+      type: object
+      properties:
+        id:
+          type: string
+          description: Bill category identifier
+        name:
+          type: string
+          description: Bill category name
+        type:
+          $ref: '#/components/schemas/BillerItemType'
+        children:
+          type: array
+          items:
+            type: object
+        logoUrl:
+          type: string
+          description: Logo of the bill Category
+      description: Category of bill issuers
+    NumberInput:
+      title: NumberInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: insert InputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          description: insert Input Label
+        description:
+          type: string
+          description: insert Input Description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: number
+    RateInput:
+      title: RateInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        inputs:
+          $ref: '#/components/schemas/Inputs'
+    TransactionSessionStatus:
+      title: TransactionSessionStatus
+      enum:
+      - AUTH_PENDING
+      - AUTH_OK
+      - AUTH_ERROR
+      - TRANSACTION_OK
+      - TRANSACTION_ERROR
+      type: string
+      description: Transaction session status
+    AccountingEntry:
+      title: AccountingEntry
+      required:
+      - id
+      - date
+      - accountId
+      - description
+      - amount
+      - balance
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: HaitiPay accounting entry id
+          example: ACO4
+        date:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          description: Account identifier
+          example: ACC123
+        description:
+          type: string
+          example: Transfer of 13.37 € from John Doe to Jane Dae
+        amount:
+          $ref: '#/components/schemas/Amount'
+        balance:
+          $ref: '#/components/schemas/Amount'
+        type:
+          $ref: '#/components/schemas/AccountingEntryType'
+    FileInput:
+      title: FileInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          $ref: '#/components/schemas/Value'
+        maxsize:
+          type: integer
+          format: int32
+        acceptedtypes:
+          type: array
+          items:
+            type: string
+          example:
+          - txt
+          - csv
+          - xls
+    InputCollection:
+      title: InputCollection
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        inputs:
+          type: array
+          items:
+            type: object
+    IpInput:
+      title: IpInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+    SelectWithAmountInput:
+      title: SelectWithAmountInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+          example: someValue
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionWithAmount'
+    IntInput:
+      title: IntInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: integer
+          format: int32
+    PhoneInput:
+      title: PhoneInput
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          example: myInputId
+        type:
+          $ref: '#/components/schemas/InputType'
+        label:
+          type: string
+          example: My input label
+        description:
+          type: string
+          example: This is my input description
+        required:
+          type: boolean
+        validators:
+          type: array
+          items:
+            type: object
+        disabled:
+          type: boolean
+          description: If true, this input cannot be change
+          default: false
+        value:
+          type: string
+          description: Phone number in international format (MSISDN)
+          example: '33612345678'
+    TransactionType:
+      title: TransactionType
+      enum:
+      - ACCOUNT_TO_ACCOUNT
+      - ACCOUNT_TO_EXTERNAL_TRF
+      - ACCOUNT_TO_TRANSIT
+      - ADJUSTMENT
+      - BANK_TO_WALLET
+      - BLOCK_ACCOUNT
+      - BUY_DEPOSIT
+      - CARD
+      - CASH_TO_EXTERNAL_TRF
+      - CASHIN
+      - CASHIN_TO_TRANSIT
+      - CASHOUT
+      - CASHOUT_FROM_EXTERNAL_TRF
+      - CASHOUT_FROM_TRANSIT
+      - CLOSE_ACCOUNT
+      - DEPOSIT
+      - DISTRIBUTOR_POSTING
+      - EXTERNAL
+      - EXTERNAL_TO_MONEYPOT
+      - EXTERNAL_TRF_TO_ACCOUNT
+      - EXTERNAL_TRF_WITHDRAW
+      - FEES_PAYMENT
+      - INVOICE_GENERATION
+      - MAINTENANCE_PAYMENT
+      - ONLINE_PAYMENT
+      - OPEN_ACCOUNT
+      - OVERBALANCE
+      - PAYBILL_ACCOUNT
+      - PAYBILL_CASH
+      - PAYMENT
+      - POSTING
+      - RECHARGE_BALANCE
+      - RECHARGE_CREDIT_CARD
+      - REVERSAL
+      - SALARY_DISBURSEMENT
+      - SALARY_TO_ACCOUNT
+      - SELL_DEPOSIT
+      - SETTLEMENT_TO_ACCOUNT
+      - SETTLEMENT_TO_CASH
+      - TRANSIT_TO_ACCOUNT
+      - UNBLOCK_ACCOUNT
+      - WALLET_TO_BANK
+      - WALLET_TO_BANK_ARCHIVE
+      type: string
+      description: Transaction type
+    TransactionsPaymentRequest:
+      title: TransactionsPaymentRequest
+      required:
+      - amount
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/Amount'
+        clientIdentifier:
+          $ref: '#/components/schemas/ClientIdentifier'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    Type2:
+      title: Type2
+      enum:
+      - PHONE
+      type: string
+    TransactionsCashoutResponse:
+      title: TransactionsCashoutResponse
+      required:
+      - session
+      - transaction
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    RegexValidator:
+      title: RegexValidator
+      required:
+      - type
+      - regex
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        regex:
+          type: string
+          description: regexp in PCRE format. Value must match this regexp
+    PasswordValidator:
+      title: PasswordValidator
+      required:
+      - type
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        minLength:
+          type: integer
+          format: int32
+        regexp:
+          type: string
+          description: regexp in PCRE format. Password must match this regexp
+        forbidRegex:
+          type: string
+          description: regexp in PCRE format. Password must not match this regexp
+        forbidDates:
+          type: boolean
+          description: if true, you cannot choose a date as a password
+        blacklist:
+          type: array
+          items:
+            type: string
+          description: list of forbidden passwords
+          example:
+          - azerty
+          - qwerty
+          - 123456
+          - password
+    AuthenticationsPincodeAcceptorVerifyResponse:
+      title: AuthenticationsPincodeAcceptorVerifyResponse
+      required:
+      - session
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+    TransactionsReversalRequest:
+      title: TransactionsReversalRequest
+      required:
+      - transactionId
+      type: object
+      properties:
+        transactionId:
+          type: string
+          description: 'HaitiPay transaction id ex: 123456'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    BetweenValidator:
+      title: BetweenValidator
+      required:
+      - type
+      - min
+      - max
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        min:
+          type: number
+        max:
+          type: number
+    LengthValidator:
+      title: LengthValidator
+      required:
+      - type
+      - length
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        length:
+          type: integer
+          format: int32
+    Event:
+      title: Event
+      enum:
+      - >-
+        {
+
+          "attribute1": "value1"
+
+        }
+      - >-
+        {
+
+          "attribute2": "value2"
+
+        }
+      type: string
+      description: Event type
+      example:
+        attribute1: value1
+    Type3:
+      title: Type3
+      enum:
+      - ID_NUMBER
+      type: string
+    AuthenticationsPincodeAcceptorVerifyRequest:
+      title: AuthenticationsPincodeAcceptorVerifyRequest
+      required:
+      - pincode
+      type: object
+      properties:
+        pincode:
+          type: string
+          description: The acceptor pincode
+          example: '1234'
+    AuthenticationsPincodeClientVerifyRequest:
+      title: AuthenticationsPincodeClientVerifyRequest
+      required:
+      - pincode
+      type: object
+      properties:
+        pincode:
+          type: string
+          description: The client pincode
+          example: '1234'
+    TransactionsPaybillRequest:
+      title: TransactionsPaybillRequest
+      type: object
+      properties:
+        inputs:
+          type: object
+          description: >-
+            This object must contain user's input if a previous `PATCH /transactions/paybill/{paybillSessionId}` call returned any `Input` object.
+
+
+            It must contains as many properties as received `Input`, with property name is equal to `Input` `id`, and property value is user's input
+    Value:
+      title: Value
+      type: object
+      properties:
+        content:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          description: 'ex: txt'
+        size:
+          type: integer
+          format: int32
+    WhitelistValidator:
+      title: WhitelistValidator
+      required:
+      - type
+      - whitelist
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        whitelist:
+          type: array
+          items:
+            type: string
+    MinLengthValidator:
+      title: MinLengthValidator
+      required:
+      - type
+      - minLength
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        minLength:
+          type: integer
+          format: int32
+    Data4:
+      title: Data4
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+      description: Event data encoded in json
+      example:
+        attribute1: value1
+        attribute2: value2
+    TransactionsReversalResponse:
+      title: TransactionsReversalResponse
+      required:
+      - session
+      - transaction
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    Data3:
+      title: Data3
+      required:
+      - client
+      type: object
+      properties:
+        client:
+          $ref: '#/components/schemas/Client'
+      description: Event data encoded in json
+      example:
+        attribute1: value1
+        attribute2: value2
+    TransactionsPaybillResponse2:
+      title: TransactionsPaybillResponse2
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+        info:
+          type: string
+          description: information to display to the user
+        additional:
+          type: string
+          description: additional information to display to the user
+        voucher:
+          type: string
+          description: Voucher generated for this bill payment, if any
+    Type4:
+      title: Type4
+      enum:
+      - EXTERNAL_ID
+      type: string
+    MaxLengthValidator:
+      title: MaxLengthValidator
+      required:
+      - type
+      - maxLength
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        maxLength:
+          type: integer
+          format: int32
+    BlacklistValidator:
+      title: BlacklistValidator
+      required:
+      - type
+      - blacklist
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidatorType'
+        blacklist:
+          type: array
+          items:
+            type: string
+    AuthenticationsOtpClientVerifyRequest:
+      title: AuthenticationsOtpClientVerifyRequest
+      required:
+      - otp
+      type: object
+      properties:
+        otp:
+          type: string
+          description: 'Insert  OTP recieved by Clients by sms or push notification 6 digits : ex:123456'
+    Data:
+      title: Data
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/CallStatus'
+      description: Event data encoded in json
+      example:
+        attribute1: value1
+        attribute2: value2
+    Data1:
+      title: Data1
+      required:
+      - token
+      type: object
+      properties:
+        token:
+          $ref: '#/components/schemas/TransactionSession'
+      description: Event data encoded in json
+      example:
+        attribute1: value1
+        attribute2: value2
+    Inputs:
+      title: Inputs
+      required:
+      - value
+      - periodicity
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/NumberInput'
+        periodicity:
+          $ref: '#/components/schemas/SelectInput'
+    TransactionsCashinResponse1:
+      title: TransactionsCashinResponse1
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    TransactionsPaybillResponse:
+      title: TransactionsPaybillResponse
+      required:
+      - transactionToken
+      type: object
+      properties:
+        transactionToken:
+          type: string
+          description: Transaction session identifier
+    TransactionsPaymentResponse1:
+      title: TransactionsPaymentResponse1
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    Type1:
+      title: Type1
+      enum:
+      - ID
+      type: string
+    TransactionsPaybillResponse1:
+      title: TransactionsPaybillResponse1
+      required:
+      - inputs
+      type: object
+      properties:
+        inputs:
+          type: array
+          items:
+            type: object
+    TransactionsReversalResponse1:
+      title: TransactionsReversalResponse1
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    AuthenticationsOtpClientVerifyResponse:
+      title: AuthenticationsOtpClientVerifyResponse
+      required:
+      - session
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+    ValidatorType:
+      title: ValidatorType
+      enum:
+      - AMOUNT
+      - MIN
+      - MAX
+      - BETWEEN
+      - BLACKLIST
+      - LENGTH
+      - MAX_LENGTH
+      - MIN_LENGTH
+      - PASSWORD
+      - REGEX
+      - WHITELIST
+      type: string
+    TransactionsCashinRequest:
+      title: TransactionsCashinRequest
+      required:
+      - clientIdentifier
+      - amount
+      type: object
+      properties:
+        clientIdentifier:
+          $ref: '#/components/schemas/ClientIdentifier'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    Type:
+      title: Type
+      required:
+      - value
+      - label
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/TransactionType'
+        label:
+          type: string
+          description: 'Ex: Transfer to account'
+    Data2:
+      title: Data2
+      required:
+      - token
+      type: object
+      properties:
+        token:
+          type: string
+          description: NSDT token
+          example: f0d40;f3d30;f8d30;f8d30;f7d30;f2d30;f4d30;f3d30;f2d30;f3d30;f1d30;f1d30;f2d30;f4d30;f6d30;f2d30;f8d30;f1d30;f7d30;f1d30
+      description: Event data encoded in json
+      example:
+        attribute1: value1
+        attribute2: value2
+    TransactionsCashoutResponse1:
+      title: TransactionsCashoutResponse1
+      required:
+      - transaction
+      type: object
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    AuthenticationsPincodeClientVerifyResponse:
+      title: AuthenticationsPincodeClientVerifyResponse
+      required:
+      - session
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+    AuthenticationsPincodeClientVerify0Error:
+      title: AuthenticationsPincodeClientVerify0Error
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+    TransactionsCashinResponse:
+      title: TransactionsCashinResponse
+      required:
+      - session
+      - transaction
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+    TransactionsCashoutRequest:
+      title: TransactionsCashoutRequest
+      required:
+      - clientIdentifier
+      - amount
+      type: object
+      properties:
+        clientIdentifier:
+          $ref: '#/components/schemas/ClientIdentifier'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        location:
+          $ref: '#/components/schemas/Geolocation'
+        externalId:
+          type: string
+          description: 'Client custom data (external) for TransactionId ex: EXT123456789'
+        externalData:
+          type: object
+          description: Set of key-value pairs that you can attach to an object. This can be useful for storing your additional information about the object in a structured format.
+    TransactionsPaymentResponse:
+      title: TransactionsPaymentResponse
+      required:
+      - session
+      - transaction
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/TransactionSession'
+        transaction:
+          $ref: '#/components/schemas/TransactionAccounting'
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://sandbox.haitipay.com/api/acceptor/v1/oauth2/token
+          scopes:
+            clients_view: View clients information
+            accounts_view: View acceptor accounts information
+            client_accounts_view: View client accounts information
+            cashin: Make cashin transaction
+            cashout: Make cashout transaction
+            bill_payment: Make bill payment transaction
+            payment: Make payment transaction
+            reversal: Make reversal transaction
+            authentication_pincode_acceptor: Authenticate acceptor with it's pincode
+            authentication_pincode_client: Authenticate client with it's pincode
+            authentication_pincode_client_ivr: Authenticate client with it's pincode through IVR
+            authentication_otp_client: Authenticate client with a one time password
+            authentication_nsdt: Authenticate client with NSDT
+            authentication_qr_code: Authenticate client with QR Code
+            authentication_cancel: Cancel an ongoing transaction
+            authentication_transaction_code: Generate a transaction code
+security:
+- oauth2: []
+tags:
+- name: Clients
+  description: ''
+- name: Accounts
+  description: ''
+- name: Cashin
+  description: ''
+- name: Cashout
+  description: ''
+- name: Payment
+  description: ''
+- name: Bill payment
+  description: ''
+- name: Reversal
+  description: ''
+- name: Authentication
+  description: ''
